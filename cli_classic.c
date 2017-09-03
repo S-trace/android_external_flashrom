@@ -48,6 +48,7 @@ static void cli_classic_usage(const char *name)
 	       " -R | --version                     print version (release)\n"
 	       " -r | --read <file>                 read flash and save to <file>\n"
 	       " -w | --write <file>                write <file> to flash\n"
+	       " -b | --backup <backup_file>        backup original flash content to <backup_file>\n"
 	       " -v | --verify <file>               verify flash against <file>\n"
 	       " -E | --erase                       erase flash memory\n"
 	       " -V | --verbose                     more verbose output\n"
@@ -101,15 +102,16 @@ int main(int argc, char *argv[])
 #if CONFIG_PRINT_WIKI == 1
 	int list_supported_wiki = 0;
 #endif
-	int read_it = 0, write_it = 0, erase_it = 0, verify_it = 0;
+	int read_it = 0, write_it = 0, erase_it = 0, verify_it = 0, backup_it = 0;
 	int dont_verify_it = 0, list_supported = 0, operation_specified = 0;
 	enum programmer prog = PROGRAMMER_INVALID;
 	int ret = 0;
 
-	static const char optstring[] = "r:Rw:v:nVEfc:l:i:p:Lzho:";
+	static const char optstring[] = "r:Rw:b:v:nVEfc:l:i:p:Lzho:";
 	static const struct option long_options[] = {
 		{"read",		1, NULL, 'r'},
 		{"write",		1, NULL, 'w'},
+		{"backup",		1, NULL, 'b'},
 		{"erase",		0, NULL, 'E'},
 		{"verify",		1, NULL, 'v'},
 		{"noverify",		0, NULL, 'n'},
@@ -128,6 +130,7 @@ int main(int argc, char *argv[])
 	};
 
 	char *filename = NULL;
+	char *backup_filename = NULL;
 	char *layoutfile = NULL;
 #ifndef STANDALONE
 	char *logfile = NULL;
@@ -165,6 +168,10 @@ int main(int argc, char *argv[])
 			}
 			filename = strdup(optarg);
 			write_it = 1;
+			break;
+		case 'b':
+			backup_filename = strdup(optarg);
+			backup_it = 1;
 			break;
 		case 'v':
 			//FIXME: gracefully handle superfluous -v
@@ -542,7 +549,7 @@ int main(int argc, char *argv[])
 	 * Give the chip time to settle.
 	 */
 	programmer_delay(100000);
-	ret |= doit(fill_flash, force, filename, read_it, write_it, erase_it, verify_it);
+	ret |= doit(fill_flash, force, filename, backup_filename, read_it, write_it, erase_it, verify_it, backup_it);
 
 	unmap_flash(fill_flash);
 out_shutdown:
